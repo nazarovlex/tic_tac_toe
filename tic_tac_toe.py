@@ -200,6 +200,3 @@ def game():
 
     else:
         print(f"{win} WIN")
-
-
-game()
