@@ -1,12 +1,28 @@
 import random
 import time
 
-game_field = [[3.1, 3.2, 3.3], [2.1, 2.2, 2.3], [1.1, 1.2, 1.3]]
-used = []
+while True:
+    try:
+        size = int(input("Input field size:\n"))
+        win_size = int(input("Input size of line to win:\n"))
+        while size < win_size:
+            print("Field size must be more then size of line ")
+            size = int(input("Input field size:\n"))
+            win_size = int(input("Input size of line to win:\n"))
+        break
+    except ValueError or IndexError:
+        print("Input correct numbers")
+
+field = [["□"] * size for i in range(size)]
+
+
+# def create_field():
+#     field = [["□"] * size for i in range(size)]
+#     return field
 
 
 def print_field():
-    for line in game_field:
+    for line in field:
         for place in line:
             if place == 0:
                 print("\033[31m{}".format(place), end="\t")
@@ -18,73 +34,200 @@ def print_field():
     print("\033[0m".format())
 
 
-def player_3_version(sign):
+def start():
+    win = str()
+    mode, p1_name, p2_name = prompt()
+
+    if mode == 1:
+        win = player_vs_player(p1_name, p2_name)
+    elif mode == 2:
+        win = player_vs_bot(p1_name, p2_name)
+    elif mode == 3:
+        win = bot_vs_bot(p1_name, p2_name)
+
+    print_field()
+
+    if win == "Tie":
+        print("Tie")
+
+    else:
+        print(f"{win} WIN")
+
+
+def player_vs_player(p1: str, p2: str) -> str:
+    winner = str()
+    while True:
+        # player 1 turn
+        print_field()
+        print(p1 + " turn")
+        sign = "X"
+        player(sign)
+        if check_new(sign) == "Tie":
+            winner = "Tie"
+            break
+        elif check_new(sign):
+            winner = p1
+            break
+
+        # player 2 turn
+        print_field()
+        print(p2 + " turn")
+        sign = 0
+        player(sign)
+        if check_new(sign) == "Tie":
+            winner = "Tie"
+            break
+        elif check_new(sign):
+            winner = p2
+            break
+
+        continue
+    return winner
+
+
+def player_vs_bot(p: str, b: str) -> str:
+    winner = str()
+    while True:
+        # player 1 turn
+        print_field()
+        print(p + " turn")
+        sign = "X"
+        player(sign)
+        if check_new(sign) == "Tie":
+            winner = "Tie"
+            break
+        elif check_new(sign):
+            winner = p
+            break
+
+        # player 2 turn
+        print_field()
+        print(b + " turn")
+        sign = 0
+        bot(sign)
+        time.sleep(1)
+        if check_new(sign) == "Tie":
+            winner = "Tie"
+            break
+        elif check_new(sign):
+            winner = b
+            break
+
+        continue
+    return winner
+
+
+def bot_vs_bot(p1: str, p2: str) -> str:
+    winner = str()
+    while True:
+        # player 1 turn
+        print_field()
+        print(p1 + " turn")
+        sign = "X"
+        bot(sign)
+        time.sleep(1)
+        if check_new(sign) == "Tie":
+            winner = "Tie"
+            break
+        elif check_new(sign):
+            winner = p1
+            break
+
+        # player 2 turn
+        print_field()
+        print(p2 + " turn")
+        sign = 0
+        bot(sign)
+        time.sleep(1)
+        if check_new(sign) == "Tie":
+            winner = "Tie"
+            break
+        elif check_new(sign):
+            winner = p2
+            break
+
+        continue
+    return winner
+
+
+def player(sign):
     while True:
         try:
             y, x = input().split()
-
-            turn = str(str(x) + "." + str(y)).strip()
-            turn = float(turn)
-            while turn in used or not 0 < turn < 4:
-                print("input correct number")
+            x = int(x) - 1
+            y = int(y) - 1
+            while field[x][y] != "□":
+                print("Input correct numbers(X and Y)")
                 y, x = input().split()
-                turn = str(str(x) + "." + str(y)).strip()
-                turn = float(turn)
-            for i in range(len(game_field)):
-                for j in range(len(game_field)):
-                    if game_field[i][j] == turn:
-                        used.append(game_field[i][j])
-                        game_field[i][j] = sign
+                x = int(x) - 1
+                y = int(y) - 1
+            field[x][y] = sign
             break
-        except ValueError:
-            print("input x and y")
+        except ValueError or IndexError:
+            print("Input 2 correct numbers: x and y")
 
 
-def bot_3_version(sign):
-    x = random.randint(1, 3)
-    y = random.randint(1, 3)
-    turn = str(str(x) + "." + str(y))
-    turn = float(turn)
-    while turn in used:
-        x = random.randint(1, 3)
-        y = random.randint(1, 3)
-        turn = str(str(x) + "." + str(y))
-        turn = float(turn)
-    for i in range(len(game_field)):
-        for j in range(len(game_field[i])):
-            if game_field[i][j] == turn:
-                used.append(game_field[i][j])
-                game_field[i][j] = sign
+def bot(sign):
+    x = random.randint(0, size - 1)
+    y = random.randint(1, size - 1)
+    while field[x][y] != "□":
+        x = random.randint(0, size - 1)
+        y = random.randint(1, size - 1)
+    field[x][y] = sign
 
 
-def game_over():
-    for line in game_field:
-        if line[0] == line[1] == line[2]:
-            return True
-    for j in range(len(game_field)):
-        if game_field[0][j] == game_field[1][j] == game_field[2][j]:
-            return True
-    if game_field[0][0] == game_field[1][1] == game_field[2][2]:
-        return True
-    if game_field[0][2] == game_field[1][1] == game_field[2][0]:
-        return True
-    if len(used) == 9:
-        return "Tie"
+def check_new(sign):
+    for line in field:
+        for i in range(len(field) - (win_size - 1)):
+            cnt = 0
+            for j in range(i, win_size - 1 + i):
+                if line[j] == line[j + 1] and line[j] == sign:
+                    cnt += 1
+            if cnt == win_size - 1:
+                return True
+
+    for column in range(len(field)):
+        for i in range(len(field) - (win_size - 1)):
+            cnt = 0
+            for j in range(i, win_size - 1 + i):
+                if field[j][column] == field[j + 1][column] == sign:
+                    cnt += 1
+            if cnt == win_size - 1:
+                return True
+
+    for i in range(len(field) - (win_size - 1)):
+        for j in range(len(field) - (win_size - 1)):
+            cnt = 0
+            for c in range(win_size - 1):
+                if field[i + c][j + c] == field[i + c + 1][j + c + 1] == sign:
+                    cnt += 1
+            if cnt == win_size - 1:
+                return True
+
+    for i in range(len(field) - win_size, len(field)):
+        for j in range(len(field) - (win_size - 1)):
+            cnt = 0
+            for c in range(win_size - 1):
+                if field[i - c][j + c] == field[i - c - 1][j + c + 1] == sign:
+                    cnt += 1
+            if cnt == win_size - 1:
+                return True
+
     return False
 
 
-def game_mode():
-    print("Pick game mode:\n 1)PvP\n 2)PvAI\n 3)AIvsAI")
+def prompt():
+    print("Pick game mode:\n 1)player_vs_player\n 2)player_vs_bot\n 3)bot_vs_bot")
     mode = int(input())
     while not 0 < mode < 4:
-        print("INPUT CORRECT NUMBER U DUMB FUCK!")
+        print("Input correct number, please!!")
         mode = int(input())
     if mode == 1:
         print("player #1 name?")
-        player_1_name = input()
+        p1_name = input()
         print("player #2 name?")
-        player_2_name = input()
-        return mode, player_1_name, player_2_name
+        p2_name = input()
+        return mode, p1_name, p2_name
     elif mode == 2:
         print("player name?")
         player_name = input()
@@ -95,108 +238,4 @@ def game_mode():
     return mode
 
 
-def game():
-    def player_vs_player(p1: str, p2: str) -> str:
-        # Переменные должны называтся емко и без спецсимволов(желательно)
-        # ты можешь указать что выдает функция и что принимает прямо как в статических языках,
-        # привыйка писать так потом будет легче читать твой код
-        winner = str()
-        while True:
-            # player 1 turn
-            print_field()
-            print(p1 + " turn")
-            player_3_version("X")
-            if game_over() == "Tie":
-                winner = "Tie"
-                break
-            elif game_over():
-                winner = p1
-                break
-
-            # player 2 turn
-            print_field()
-            print(p2 + " turn")
-            player_3_version(0)
-            if game_over() == "Tie":
-                winner = "Tie"
-                break
-            elif game_over():
-                winner = p2
-                break
-
-            continue
-        return winner
-
-    def player_vs_bot(p: str, b: str) -> str:
-        winner = str()
-        while True:
-            # player 1 turn
-            print_field()
-            print(p + " turn")
-            player_3_version("X")
-            if game_over() == "Tie":
-                winner = "Tie"
-                break
-            elif game_over():
-                winner = p
-                break
-
-            # player 2 turn
-            print_field()
-            print(b + " turn")
-            bot_3_version(0)
-            time.sleep(1)
-            if game_over() == "Tie":
-                winner = "Tie"
-                break
-            elif game_over():
-                winner = b
-                break
-
-            continue
-        return winner
-
-    def bot_vs_bot(p1: str, p2: str) -> str:
-        winner = str()
-        while True:
-            # player 1 turn
-            print_field()
-            print(p1 + " turn")
-            bot_3_version("X")
-            time.sleep(1)
-            if game_over() == "Tie":
-                winner = "Tie"
-                break
-            elif game_over():
-                winner = p1
-                break
-            # player 2 turn
-            print_field()
-            print(p2 + " turn")
-            bot_3_version(0)
-            time.sleep(1)
-            if game_over() == "Tie":
-                winner = "Tie"
-                break
-            elif game_over():
-                winner = p2
-                break
-
-            continue
-        return winner
-    win = str()
-    mode, player_1_name, player_2_name = game_mode()
-    if mode == 1:
-        win = player_vs_player(player_1_name, player_2_name)
-    elif mode == 2:
-        win = player_vs_bot(player_1_name, player_2_name)
-    elif mode == 3:
-        win = bot_vs_bot(player_1_name, player_2_name)
-
-    print_field()
-
-    if win == "Tie":
-        print("Tie")
-
-    else:
-        print(f"{win} WIN")
+start()
