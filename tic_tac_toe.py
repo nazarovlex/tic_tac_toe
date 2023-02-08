@@ -62,10 +62,10 @@ def player_vs_player(p1: str, p2: str) -> str:
         print(p1 + " turn")
         sign = "X"
         player(sign)
-        if check_new(sign) == "Tie":
+        if check(sign) == "Tie":
             winner = "Tie"
             break
-        elif check_new(sign):
+        elif check(sign):
             winner = p1
             break
 
@@ -74,10 +74,10 @@ def player_vs_player(p1: str, p2: str) -> str:
         print(p2 + " turn")
         sign = 0
         player(sign)
-        if check_new(sign) == "Tie":
+        if check(sign) == "Tie":
             winner = "Tie"
             break
-        elif check_new(sign):
+        elif check(sign):
             winner = p2
             break
 
@@ -93,10 +93,10 @@ def player_vs_bot(p: str, b: str) -> str:
         print(p + " turn")
         sign = "X"
         player(sign)
-        if check_new(sign) == "Tie":
+        if check(sign) == "Tie":
             winner = "Tie"
             break
-        elif check_new(sign):
+        elif check(sign):
             winner = p
             break
 
@@ -106,10 +106,10 @@ def player_vs_bot(p: str, b: str) -> str:
         sign = 0
         bot(sign)
         time.sleep(1)
-        if check_new(sign) == "Tie":
+        if check(sign) == "Tie":
             winner = "Tie"
             break
-        elif check_new(sign):
+        elif check(sign):
             winner = b
             break
 
@@ -126,10 +126,10 @@ def bot_vs_bot(p1: str, p2: str) -> str:
         sign = "X"
         bot(sign)
         time.sleep(1)
-        if check_new(sign) == "Tie":
+        if check(sign) == "Tie":
             winner = "Tie"
             break
-        elif check_new(sign):
+        elif check(sign):
             winner = p1
             break
 
@@ -139,10 +139,10 @@ def bot_vs_bot(p1: str, p2: str) -> str:
         sign = 0
         bot(sign)
         time.sleep(1)
-        if check_new(sign) == "Tie":
+        if check(sign) == "Tie":
             winner = "Tie"
             break
-        elif check_new(sign):
+        elif check(sign):
             winner = p2
             break
 
@@ -156,12 +156,12 @@ def player(sign):
             y, x = input().split()
             x = int(x) - 1
             y = int(y) - 1
-            while field[x][y] != "□":
+            while field[size - 1 - x][y] != "□":
                 print("Input correct numbers(X and Y)")
                 y, x = input().split()
                 x = int(x) - 1
                 y = int(y) - 1
-            field[x][y] = sign
+            field[size - 1 - x][y] = sign
             break
         except ValueError or IndexError:
             print("Input 2 correct numbers: x and y")
@@ -176,7 +176,7 @@ def bot(sign):
     field[x][y] = sign
 
 
-def check_new(sign):
+def check(sign):
     for line in field:
         for i in range(len(field) - (win_size - 1)):
             cnt = 0
