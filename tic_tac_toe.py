@@ -16,11 +16,6 @@ while True:
 field = [["□"] * size for i in range(size)]
 
 
-# def create_field():
-#     field = [["□"] * size for i in range(size)]
-#     return field
-
-
 def print_field():
     for line in field:
         for place in line:
@@ -34,27 +29,42 @@ def print_field():
     print("\033[0m".format())
 
 
+def win_print(win_line):
+    for i in range(len(field)):
+        for j in range(len(field)):
+            if [i, j] in win_line:
+                print("\033[1;33m{}".format(field[i][j]), end="\t")
+            elif field[i][j] == 0:
+                print("\033[31m{}".format(field[i][j]), end="\t")
+            elif field[i][j] == "X":
+                print("\033[34m{}".format(field[i][j]), end="\t")
+            else:
+                print("\033[0m{}".format("□"), end="\t")
+        print("\n")
+    print("\033[0m".format())
+
+
 def start():
-    win = str()
+    win, win_line = str(), str()
     mode, p1_name, p2_name = prompt()
 
     if mode == 1:
-        win = player_vs_player(p1_name, p2_name)
+        win, win_line = player_vs_player(p1_name, p2_name)
     elif mode == 2:
-        win = player_vs_bot(p1_name, p2_name)
+        win, win_line = player_vs_bot(p1_name, p2_name)
     elif mode == 3:
-        win = bot_vs_bot(p1_name, p2_name)
-
-    print_field()
+        win, win_line = bot_vs_bot(p1_name, p2_name)
 
     if win == "Tie":
         print("Tie")
-
+        print_field()
     else:
         print(f"{win} WIN")
+        win_print(win_line)
+        print(win_line)
 
 
-def player_vs_player(p1: str, p2: str) -> str:
+def player_vs_player(p1: str, p2: str) -> tuple[str, any]:
     winner = str()
     while True:
         # player 1 turn
@@ -62,10 +72,11 @@ def player_vs_player(p1: str, p2: str) -> str:
         print(p1 + " turn")
         sign = "X"
         player(sign)
-        if check(sign) == "Tie":
+        win_check, win_line = check(sign)
+        if win_check == 1:
             winner = "Tie"
             break
-        elif check(sign):
+        elif win_check == 2:
             winner = p1
             break
 
@@ -74,80 +85,85 @@ def player_vs_player(p1: str, p2: str) -> str:
         print(p2 + " turn")
         sign = 0
         player(sign)
-        if check(sign) == "Tie":
+        win_check, win_line = check(sign)
+        if win_check == 1:
             winner = "Tie"
             break
-        elif check(sign):
+        elif win_check == 2:
             winner = p2
             break
 
         continue
-    return winner
+    return winner, win_line
 
 
-def player_vs_bot(p: str, b: str) -> str:
+def player_vs_bot(p: str, b: str) -> tuple[str, any]:
     winner = str()
     while True:
-        # player 1 turn
+        # player turn
         print_field()
         print(p + " turn")
         sign = "X"
         player(sign)
-        if check(sign) == "Tie":
+        win_check, win_line = check(sign)
+        if win_check == 1:
             winner = "Tie"
             break
-        elif check(sign):
+        elif win_check == 2:
             winner = p
             break
 
-        # player 2 turn
+        # bot turn
         print_field()
         print(b + " turn")
         sign = 0
         bot(sign)
         time.sleep(1)
-        if check(sign) == "Tie":
+        win_check, win_line = check(sign)
+        if win_check == 1:
             winner = "Tie"
             break
-        elif check(sign):
+        elif win_check == 2:
             winner = b
             break
 
         continue
-    return winner
+    return winner, win_line
 
 
-def bot_vs_bot(p1: str, p2: str) -> str:
+def bot_vs_bot(b1: str, b2: str) -> tuple[str, any]:
     winner = str()
     while True:
-        # player 1 turn
+        # bot#1 turn
         print_field()
-        print(p1 + " turn")
+        print(b1 + " turn")
         sign = "X"
         bot(sign)
         time.sleep(1)
-        if check(sign) == "Tie":
+        win_check, win_line = check(sign)
+        if win_check == 1:
             winner = "Tie"
             break
-        elif check(sign):
-            winner = p1
+        elif win_check == 2:
+            winner = b1
             break
 
-        # player 2 turn
+        # bot#2 turn
         print_field()
-        print(p2 + " turn")
+        print(b2 + " turn")
         sign = 0
         bot(sign)
         time.sleep(1)
-        if check(sign) == "Tie":
+        win_check, win_line = check(sign)
+        if win_check == 1:
             winner = "Tie"
             break
-        elif check(sign):
-            winner = p2
+        elif win_check == 2:
+            winner = b2
             break
 
         continue
-    return winner
+    return winner, win_line
 
 
 def player(sign):
@@ -169,73 +185,99 @@ def player(sign):
 
 def bot(sign):
     x = random.randint(0, size - 1)
-    y = random.randint(1, size - 1)
+    y = random.randint(0, size - 1)
     while field[x][y] != "□":
         x = random.randint(0, size - 1)
-        y = random.randint(1, size - 1)
+        y = random.randint(0, size - 1)
     field[x][y] = sign
 
 
 def check(sign):
-    for line in field:
+    win_line = []
+    for line in range(len(field)):
         for i in range(len(field) - (win_size - 1)):
             cnt = 0
+            win_line = []
             for j in range(i, win_size - 1 + i):
-                if line[j] == line[j + 1] and line[j] == sign:
+                if [line, j] not in win_line:
+                    win_line.append([line, j])
+                if field[line][j] == field[line][j + 1] == sign:
                     cnt += 1
+                    win_line.append([line, j + 1])
             if cnt == win_size - 1:
-                return True
+                return 2, win_line
 
     for column in range(len(field)):
         for i in range(len(field) - (win_size - 1)):
             cnt = 0
+            win_line = []
             for j in range(i, win_size - 1 + i):
+                if [j, column] not in win_line:
+                    win_line.append([j, column])
                 if field[j][column] == field[j + 1][column] == sign:
                     cnt += 1
+                    win_line.append([j + 1, column])
             if cnt == win_size - 1:
-                return True
+                return 2, win_line
 
     for i in range(len(field) - (win_size - 1)):
         for j in range(len(field) - (win_size - 1)):
             cnt = 0
+            win_line = []
             for c in range(win_size - 1):
+                if [i + c, j + c] not in win_line:
+                    win_line.append([i + c, j + c])
                 if field[i + c][j + c] == field[i + c + 1][j + c + 1] == sign:
                     cnt += 1
+                    win_line.append([i + c + 1, j + c + 1])
             if cnt == win_size - 1:
-                return True
+                return 2, win_line
 
     for i in range(len(field) - win_size, len(field)):
         for j in range(len(field) - (win_size - 1)):
             cnt = 0
+            win_line = []
             for c in range(win_size - 1):
-                if field[i - c][j + c] == field[i - c - 1][j + c + 1] == sign:
+                if [i - c, j + c] not in win_line:
+                    win_line.append([i - c, j + c])
+                if field[i - c][j + c] == field[i - c - 1][j + c + 1] == sign and (i-c-1)>-1:
                     cnt += 1
+                    win_line.append([i - c - 1, j + c + 1])
             if cnt == win_size - 1:
-                return True
+                return 2, win_line
 
-    return False
+    cnt = 0
+    for i in range(len(field)):
+        for j in range(len(field)):
+            if field[i][j] == "□":
+                cnt += 1
+    if cnt > 0:
+        return 0, None
+    elif cnt == 0:
+        win_line = None
+        return 1, win_line
+    return 0, None
 
 
 def prompt():
-    print("Pick game mode:\n 1)player_vs_player\n 2)player_vs_bot\n 3)bot_vs_bot")
-    mode = int(input())
-    while not 0 < mode < 4:
-        print("Input correct number, please!!")
-        mode = int(input())
-    if mode == 1:
-        print("player #1 name?")
-        p1_name = input()
-        print("player #2 name?")
-        p2_name = input()
-        return mode, p1_name, p2_name
-    elif mode == 2:
-        print("player name?")
-        player_name = input()
-        return mode, player_name, "Bot"
-    elif mode == 3:
-        return mode, "Bot#1", "Bot#2"
-
-    return mode
-
-
-start()
+    while True:
+        try:
+            print("Pick game mode:\n 1)player_vs_player\n 2)player_vs_bot\n 3)bot_vs_bot")
+            mode = int(input())
+            while not 0 < mode < 4:
+                print("Input correct number, please!!")
+                mode = int(input())
+            if mode == 1:
+                print("player #1 name?")
+                p1_name = input()
+                print("player #2 name?")
+                p2_name = input()
+                return mode, p1_name, p2_name
+            elif mode == 2:
+                print("player name?")
+                player_name = input()
+                return mode, player_name, "Bot"
+            elif mode == 3:
+                return mode, "Bot#1", "Bot#2"
+        except ValueError or IndexError:
+            print("Input correct numbers")
