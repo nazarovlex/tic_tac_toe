@@ -8,14 +8,14 @@ class TicTacToe:
         self.win_size = win_size
         self.p1_name = p1_name
         self.p2_name = p2_name
+        self.field = []
+        self.win_line = []
 
     def create_field(self):
-        field = [["□"] * self.size for _ in range(self.size)]
+        self.field = [["□"] * self.size for _ in range(self.size)]
 
-        return field
-
-    @staticmethod
-    def print_field(field):
+    def print_field(self):
+        field = self.field
         for line in field:
             for place in line:
                 if place == "0":
@@ -27,8 +27,9 @@ class TicTacToe:
             print("\n")
         print("\033[0m".format())
 
-    @staticmethod
-    def win_print(field, win_line):
+    def print_winner(self):
+        field = self.field
+        win_line = self.win_line
         for i in range(len(field)):
             for j in range(len(field)):
                 if [i, j] in win_line:
@@ -42,8 +43,9 @@ class TicTacToe:
             print("\n")
         print("\033[0m".format())
 
-    @staticmethod
-    def player(field: [], sign: str, size: int):
+    def player_turn(self, sign: str):
+        field = self.field
+        size = self.size
         while True:
             try:
                 y, x = input().split()
@@ -61,8 +63,9 @@ class TicTacToe:
                 print("Error: Input 2 correct numbers: x and y")
         return field
 
-    @staticmethod
-    def bot(field: [], sign: str, size: int):
+    def bot_turn(self, sign: str):
+        field = self.field
+        size = self.size
         x = random.randint(0, size - 1)
         y = random.randint(0, size - 1)
         while field[x][y] != "□":
@@ -71,8 +74,9 @@ class TicTacToe:
         field[x][y] = sign
         return field
 
-    @staticmethod
-    def check(field: [], sign: str, win_size: int):
+    def check(self, sign: str):
+        win_size = self.win_size
+        field = self.field
         for line in range(len(field)):
             for i in range(len(field) - (win_size - 1)):
                 cnt = 0
@@ -137,15 +141,17 @@ class TicTacToe:
             return 1, win_line
         return 0, None
 
-    def player_vs_player(self, field: [], win_size: int, p1: str, p2: str) -> tuple[str, any]:
+    def player_vs_player(self) -> tuple[str, any]:
         winner = str()
+        p1 = self.p1_name
+        p2 = self.p2_name
         while True:
             # player 1 turn
-            self.print_field(field)
+            self.print_field()
             print(p1 + " turn")
             sign = "X"
-            field = self.player(field, sign, len(field))
-            win_check, win_line = self.check(field, sign, win_size)
+            self.player_turn(sign)
+            win_check, win_line = self.check(sign)
             if win_check == 1:
                 winner = "Tie"
                 break
@@ -154,11 +160,11 @@ class TicTacToe:
                 break
 
             # player 2 turn
-            self.print_field(field)
+            self.print_field()
             print(p2 + " turn")
             sign = "0"
-            field = self.player(field, sign, len(field))
-            win_check, win_line = self.check(field, sign, win_size)
+            self.player_turn(sign)
+            win_check, win_line = self.check(sign)
             if win_check == 1:
                 winner = "Tie"
                 break
@@ -167,17 +173,20 @@ class TicTacToe:
                 break
 
             continue
-        return winner, win_line
+        self.win_line = win_line
+        return winner
 
-    def player_vs_bot(self, field: [], win_size: int, p: str, b: str) -> tuple[str, any]:
+    def player_vs_bot(self) -> tuple[str, any]:
         winner = str()
+        p = self.p1_name
+        b = self.p2_name
         while True:
             # player turn
-            self.print_field(field)
+            self.print_field()
             print(p + " turn")
             sign = "X"
-            field = self.player(field, sign, len(field))
-            win_check, win_line = self.check(field, sign, win_size)
+            self.player_turn(sign)
+            win_check, win_line = self.check(sign)
             if win_check == 1:
                 winner = "Tie"
                 break
@@ -186,12 +195,12 @@ class TicTacToe:
                 break
 
             # bot turn
-            self.print_field(field)
+            self.print_field()
             print(b + " turn")
             sign = "0"
-            field = self.bot(field, sign, len(field))
+            self.bot_turn(sign)
             time.sleep(1)
-            win_check, win_line = self.check(field, sign, win_size)
+            win_check, win_line = self.check(sign)
             if win_check == 1:
                 winner = "Tie"
                 break
@@ -200,18 +209,21 @@ class TicTacToe:
                 break
 
             continue
-        return winner, win_line
+        self.win_line = win_line
+        return winner
 
-    def bot_vs_bot(self, field: [], win_size: int, b1: str, b2: str) -> tuple[str, any]:
+    def bot_vs_bot(self) -> tuple[str, any]:
         winner = str()
+        b1 = self.p1_name
+        b2 = self.p2_name
         while True:
             # bot#1 turn
-            self.print_field(field)
+            self.print_field()
             print(b1 + " turn")
             sign = "X"
-            field = self.bot(field, sign, len(field))
+            self.bot_turn(sign)
             time.sleep(1)
-            win_check, win_line = self.check(field, sign, win_size)
+            win_check, win_line = self.check(sign)
             if win_check == 1:
                 winner = "Tie"
                 break
@@ -220,12 +232,12 @@ class TicTacToe:
                 break
 
             # bot#2 turn
-            self.print_field(field)
+            self.print_field()
             print(b2 + " turn")
             sign = "0"
-            field = self.bot(field, sign, len(field))
+            self.bot_turn(sign)
             time.sleep(1)
-            win_check, win_line = self.check(field, sign, win_size)
+            win_check, win_line = self.check(sign)
             if win_check == 1:
                 winner = "Tie"
                 break
@@ -234,7 +246,8 @@ class TicTacToe:
                 break
 
             continue
-        return winner, win_line
+        self.win_line = win_line
+        return winner
 
 
 def start():
@@ -249,24 +262,23 @@ def start():
             break
         except ValueError or IndexError:
             print("Input correct numbers")
-    win, win_line = str(), str()
+    win = ""
     mode, p1_name, p2_name = prompt()
     game = TicTacToe(size, win_size, p1_name, p2_name)
-    field = game.create_field()
-    game.print_field(field)
+    game.create_field()
     if mode == 1:
-        win, win_line = game.player_vs_player(field, win_size, p1_name, p2_name)
+        win = game.player_vs_player()
     elif mode == 2:
-        win, win_line = game.player_vs_bot(field, win_size, p1_name, p2_name)
+        win = game.player_vs_bot()
     elif mode == 3:
-        win, win_line = game.bot_vs_bot(field, win_size, p1_name, p2_name)
+        win = game.bot_vs_bot()
 
     if win == "Tie":
         print("Tie")
-        game.print_field(field)
+        game.print_field()
     else:
         print(f"{win} WIN")
-        game.win_print(field, win_line)
+        game.print_winner()
 
 
 def prompt():
@@ -291,9 +303,3 @@ def prompt():
                 return mode, "Bot#1", "Bot#2"
         except ValueError or IndexError:
             print("Input correct numbers")
-
-
-
-
-
-
