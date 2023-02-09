@@ -61,7 +61,6 @@ def start():
     else:
         print(f"{win} WIN")
         win_print(win_line)
-        print(win_line)
 
 
 def player_vs_player(p1: str, p2: str) -> tuple[str, any]:
