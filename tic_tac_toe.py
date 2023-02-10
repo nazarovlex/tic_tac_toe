@@ -213,12 +213,11 @@ class TicTacToe:
             sign = "X"
             if status == 1:
                 x, y = self.check_input()
-                client_socket.send(bytes(str(x), "utf-8"))
-                client_socket.send(bytes(str(y), "utf-8"))
+                client_socket.send(bytes(str(x) + "|" + str(y), "utf-8"))
                 self.player_online_turn(sign, x, y)
             elif status == 2:
-                x = int(s.recv(20).decode("utf-8"))
-                y = int(s.recv(20).decode("utf-8"))
+                x, y = s.recv(1024).decode("utf-8").split("|")
+                x, y = int(x), int(y)
                 self.player_online_turn(sign, x, y)
             win_check, win_line = self.check(sign)
             if win_check == 1:
@@ -234,12 +233,11 @@ class TicTacToe:
             sign = "0"
             if status == 2:
                 x, y = self.check_input()
-                s.send(bytes(str(x), "utf-8"))
-                s.send(bytes(str(y), "utf-8"))
+                s.send(bytes(str(x) + "|" + str(y), "utf-8"))
                 self.player_online_turn(sign, x, y)
             elif status == 1:
-                x = int(client_socket.recv(20).decode("utf-8"))
-                y = int(client_socket.recv(20).decode("utf-8"))
+                x, y = client_socket.recv(1024).decode("utf-8").split("|")
+                x, y = int(x), int(y)
                 self.player_online_turn(sign, x, y)
             win_check, win_line = self.check(sign)
             if win_check == 1:
@@ -383,10 +381,10 @@ def prompt():
 
 
 # обработка сервера
-def host_game(status):
+def host_game(status, ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((socket.gethostname(), 1234))
-    s.listen(1)
+    s.bind((ip, port))
+    s.listen(10)
 
     while True:
         try:
@@ -399,17 +397,16 @@ def host_game(status):
             break
         except ValueError or IndexError:
             print("Input correct numbers")
-
     host_name = input("input your name: ")
     client_socket, address = s.accept()
-    client_name = client_socket.recv(100).decode("utf-8")
-    client_socket.send(bytes(host_name, "utf-8"))
-    client_socket.send(bytes(str(size), "utf-8"))
-    client_socket.send(bytes(str(win_size), "utf-8"))
+    client_socket.send(bytes(host_name + "|" + str(size) + "|" + str(win_size), "utf-8"))
+
+    client_name = client_socket.recv(20).decode("utf-8")
+
+    print(size, win_size, host_name, client_name)
     game = TicTacToe(size, win_size, host_name, client_name)
     game.create_field()
-    print(f"Game start!")
-    game.print_field()
+    print("Game start!")
     while True:
         win = game.player_vs_player_online(s, client_socket, status)
         break
@@ -420,34 +417,26 @@ def host_game(status):
     else:
         print(f"{win} WIN")
         game.print_winner()
-    # win = game.player_vs_player()
-
-    # while True:
-    #     serv_msg = input("You: ")
-    #     client_socket.send(bytes(serv_msg, "utf-8"))
-    #     msg = client_socket.recv(1024)
-    #     full_msg = msg.decode("utf-8")
-    #     print(f"Your friend: {full_msg}")
-    #     if serv_msg == "exit":
-    #         client_socket.close()
-    #         break
-    #     else:
-    #         continue
+    client_socket.close()
+    s.close()
 
 
 # обработка клиента
-def client_game(status):
-    client_name = input("input your name: ")
+def client_game(status, ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((socket.gethostname(), 1234))
+    s.connect((ip, port))
+    client_name = input("input your name: ")
+
+    msg = s.recv(1024).decode("utf-8")
+    host_name, size, win_size = msg.split("|")
+    size, win_size = int(size), int(win_size)
+
     s.send(bytes(client_name, "utf-8"))
-    host_name = s.recv(100).decode("utf-8")
-    size = int(s.recv(20).decode("utf-8"))
-    win_size = int(s.recv(20).decode("utf-8"))
+    print(size, win_size, host_name, client_name)
+
     game = TicTacToe(size, win_size, host_name, client_name)
     game.create_field()
-    print(f"Game start!")
-    game.print_field()
+    print("Game start!")
     while True:
         win = game.player_vs_player_online(s, None, status)
         break
@@ -457,32 +446,22 @@ def client_game(status):
     else:
         print(f"{win} WIN")
         game.print_winner()
-    # print("Welcome to chat!")
-    # while True:
-    #     msg = s.recv(1000)
-    #     full_msg = msg.decode("utf-8")
-    #     print(f"Your friend: {full_msg}")
-    #     client_msg = input("You: ")
-    #     s.send(bytes(client_msg, "utf-8"))
-    #     if client_msg == "exit":
-    #         s.close()
-    #         break
+    s.close()
 
 
 def start():
     status = 0
-    # выбор режима сингла или мультиплеер
     game_mode = int(input(" Chose mode:\n1) multiplayer \n2) singleplayer \n"))  # добавить обработку ошибок нужно
+
     if game_mode != 2:
         status = int(input("1) Host game\n2) Connect to...\n"))
-    # если мультиплеер создать или подключиться
+
     if game_mode == 2:
         start_singleplayer()
-    elif game_mode == 1 and status == 1:
-        host_game(status)
+
+    ip = socket.gethostname()
+    port = 8081
+    if game_mode == 1 and status == 1:
+        host_game(status, ip, port)
     elif game_mode == 1 and status == 2:
-        client_game(status)
-
-    # начало игры хост выбирает поле и комбо для победы
-
-    # игра player_vs_player
+        client_game(status, ip, port)
