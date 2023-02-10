@@ -1,5 +1,6 @@
 import random
 import time
+import socket
 
 
 class TicTacToe:
@@ -61,6 +62,31 @@ class TicTacToe:
                 break
             except (ValueError, IndexError):
                 print("Error: Input 2 correct numbers: x and y")
+        return field
+
+    def check_input(self):
+        field = self.field
+        size = self.size
+        while True:
+            try:
+                y, x = input().split()
+                x = int(x) - 1
+                y = int(y) - 1
+
+                while field[size - 1 - x][y] != "□" or not -1 < y < size or not -1 < x < size:
+                    print("Input correct numbers(X and Y)")
+                    y, x = input().split()
+                    x = int(x) - 1
+                    y = int(y) - 1
+                break
+            except (ValueError, IndexError):
+                print("Error: Input 2 correct numbers: x and y")
+        return x, y
+
+    def player_online_turn(self, sign: str, x: int, y: int):
+        field = self.field
+        size = self.size
+        field[size - 1 - x][y] = sign
         return field
 
     def bot_turn(self, sign: str):
@@ -176,6 +202,57 @@ class TicTacToe:
         self.win_line = win_line
         return winner
 
+    def player_vs_player_online(self, s, client_socket, status: int) -> tuple[str, any]:
+        winner = str()
+        p1 = self.p1_name
+        p2 = self.p2_name
+        while True:
+            # host turn
+            self.print_field()
+            print(p1 + " turn")
+            sign = "X"
+            if status == 1:
+                x, y = self.check_input()
+                client_socket.send(bytes(str(x), "utf-8"))
+                client_socket.send(bytes(str(y), "utf-8"))
+                self.player_online_turn(sign, x, y)
+            elif status == 2:
+                x = int(s.recv(20).decode("utf-8"))
+                y = int(s.recv(20).decode("utf-8"))
+                self.player_online_turn(sign, x, y)
+            win_check, win_line = self.check(sign)
+            if win_check == 1:
+                winner = "Tie"
+                break
+            elif win_check == 2:
+                winner = p1
+                break
+
+            # client turn
+            self.print_field()
+            print(p2 + " turn")
+            sign = "0"
+            if status == 2:
+                x, y = self.check_input()
+                s.send(bytes(str(x), "utf-8"))
+                s.send(bytes(str(y), "utf-8"))
+                self.player_online_turn(sign, x, y)
+            elif status == 1:
+                x = int(client_socket.recv(20).decode("utf-8"))
+                y = int(client_socket.recv(20).decode("utf-8"))
+                self.player_online_turn(sign, x, y)
+            win_check, win_line = self.check(sign)
+            if win_check == 1:
+                winner = "Tie"
+                break
+            elif win_check == 2:
+                winner = p2
+                break
+
+            continue
+        self.win_line = win_line
+        return winner
+
     def player_vs_bot(self) -> tuple[str, any]:
         winner = str()
         p = self.p1_name
@@ -250,7 +327,7 @@ class TicTacToe:
         return winner
 
 
-def start():
+def start_singleplayer():
     while True:
         try:
             size = int(input("Input field size:\n"))
@@ -303,3 +380,109 @@ def prompt():
                 return mode, "Bot#1", "Bot#2"
         except ValueError or IndexError:
             print("Input correct numbers")
+
+
+# обработка сервера
+def host_game(status):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.bind((socket.gethostname(), 1234))
+    s.listen(1)
+
+    while True:
+        try:
+            size = int(input("Input field size:\n"))
+            win_size = int(input("Input size of line to win:\n"))
+            while size < win_size:
+                print("Field size must be more then size of line ")
+                size = int(input("Input field size:\n"))
+                win_size = int(input("Input size of line to win:\n"))
+            break
+        except ValueError or IndexError:
+            print("Input correct numbers")
+
+    host_name = input("input your name: ")
+    client_socket, address = s.accept()
+    client_name = client_socket.recv(100).decode("utf-8")
+    client_socket.send(bytes(host_name, "utf-8"))
+    client_socket.send(bytes(str(size), "utf-8"))
+    client_socket.send(bytes(str(win_size), "utf-8"))
+    game = TicTacToe(size, win_size, host_name, client_name)
+    game.create_field()
+    print(f"Game start!")
+    game.print_field()
+    while True:
+        win = game.player_vs_player_online(s, client_socket, status)
+        break
+
+    if win == "Tie":
+        print("Tie")
+        game.print_field()
+    else:
+        print(f"{win} WIN")
+        game.print_winner()
+    # win = game.player_vs_player()
+
+    # while True:
+    #     serv_msg = input("You: ")
+    #     client_socket.send(bytes(serv_msg, "utf-8"))
+    #     msg = client_socket.recv(1024)
+    #     full_msg = msg.decode("utf-8")
+    #     print(f"Your friend: {full_msg}")
+    #     if serv_msg == "exit":
+    #         client_socket.close()
+    #         break
+    #     else:
+    #         continue
+
+
+# обработка клиента
+def client_game(status):
+    client_name = input("input your name: ")
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((socket.gethostname(), 1234))
+    s.send(bytes(client_name, "utf-8"))
+    host_name = s.recv(100).decode("utf-8")
+    size = int(s.recv(20).decode("utf-8"))
+    win_size = int(s.recv(20).decode("utf-8"))
+    game = TicTacToe(size, win_size, host_name, client_name)
+    game.create_field()
+    print(f"Game start!")
+    game.print_field()
+    while True:
+        win = game.player_vs_player_online(s, None, status)
+        break
+    if win == "Tie":
+        print("Tie")
+        game.print_field()
+    else:
+        print(f"{win} WIN")
+        game.print_winner()
+    # print("Welcome to chat!")
+    # while True:
+    #     msg = s.recv(1000)
+    #     full_msg = msg.decode("utf-8")
+    #     print(f"Your friend: {full_msg}")
+    #     client_msg = input("You: ")
+    #     s.send(bytes(client_msg, "utf-8"))
+    #     if client_msg == "exit":
+    #         s.close()
+    #         break
+
+
+def start():
+    status = 0
+    # выбор режима сингла или мультиплеер
+    game_mode = int(input(" Chose mode:\n1) multiplayer \n2) singleplayer \n"))  # добавить обработку ошибок нужно
+    if game_mode != 2:
+        status = int(input("1) Host game\n2) Connect to...\n"))
+    # если мультиплеер создать или подключиться
+    if game_mode == 2:
+        start_singleplayer()
+    elif game_mode == 1 and status == 1:
+        host_game(status)
+    elif game_mode == 1 and status == 2:
+        client_game(status)
+
+    # начало игры хост выбирает поле и комбо для победы
+
+    # игра player_vs_player
