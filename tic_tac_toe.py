@@ -451,16 +451,31 @@ def client_game(status, ip, port):
 
 def start():
     status = 0
-    game_mode = int(input(" Chose mode:\n1) multiplayer \n2) singleplayer \n"))  # добавить обработку ошибок нужно
+    while True:
+        try:
+            game_mode = int(
+                input(" Chose mode:\n1) multiplayer \n2) singleplayer \n"))
+            while 1 > game_mode or game_mode > 2:
+                print("Input correct data")
+                game_mode = int(
+                    input(" Chose mode:\n1) multiplayer \n2) singleplayer \n"))
 
-    if game_mode != 2:
-        status = int(input("1) Host game\n2) Connect to...\n"))
-
+            if game_mode != 2:
+                status = int(input("1) Host game\n2) Connect to...\n"))
+                while 1 > status or status > 2:
+                    print("Input correct data")
+                    status = int(input("1) Host game\n2) Connect to...\n"))
+            break
+        except ValueError:
+            print("Input correct data")
+    ip = socket.gethostname()
+    port = 8080
     if game_mode == 2:
         start_singleplayer()
+    if game_mode == 1:
+        ip = input("Input HOST IP: ")
+        port = int(input("Input HOST port: "))
 
-    ip = socket.gethostname()
-    port = 8081
     if game_mode == 1 and status == 1:
         host_game(status, ip, port)
     elif game_mode == 1 and status == 2:
