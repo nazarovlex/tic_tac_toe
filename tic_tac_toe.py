@@ -403,7 +403,6 @@ def host_game(status, ip, port):
 
     client_name = client_socket.recv(20).decode("utf-8")
 
-    print(size, win_size, host_name, client_name)
     game = TicTacToe(size, win_size, host_name, client_name)
     game.create_field()
     print("Game start!")
@@ -432,7 +431,6 @@ def client_game(status, ip, port):
     size, win_size = int(size), int(win_size)
 
     s.send(bytes(client_name, "utf-8"))
-    print(size, win_size, host_name, client_name)
 
     game = TicTacToe(size, win_size, host_name, client_name)
     game.create_field()
@@ -472,11 +470,23 @@ def start():
     port = 8080
     if game_mode == 2:
         start_singleplayer()
-    if game_mode == 1:
-        ip = input("Input HOST IP: ")
-        port = int(input("Input HOST port: "))
 
     if game_mode == 1 and status == 1:
-        host_game(status, ip, port)
+        while True:
+            try:
+                ip = input("Input HOST IP: ")
+                port = int(input("Input HOST port: "))
+                host_game(status, ip, port)
+                break
+            except (ValueError, socket.gaierror, OverflowError, OSError):
+                print("Input correct IP and port")
+
     elif game_mode == 1 and status == 2:
-        client_game(status, ip, port)
+        while True:
+            try:
+                ip = input("Input HOST IP: ")
+                port = int(input("Input HOST port: "))
+                client_game(status, ip, port)
+                break
+            except (ValueError, socket.gaierror, OverflowError, OSError):
+                print("Input correct IP and port")
