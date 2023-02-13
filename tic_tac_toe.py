@@ -380,7 +380,7 @@ def prompt():
             print("Input correct numbers")
 
 
-# обработка сервера
+# Host processing
 def host_game(status, ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((ip, port))
@@ -420,7 +420,7 @@ def host_game(status, ip, port):
     s.close()
 
 
-# обработка клиента
+# Client processing
 def client_game(status, ip, port):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((ip, port))
@@ -466,8 +466,7 @@ def start():
             break
         except ValueError:
             print("Input correct data")
-    ip = socket.gethostname()
-    port = 8080
+
     if game_mode == 2:
         start_singleplayer()
 
